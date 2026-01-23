@@ -19,10 +19,14 @@ class DbTableMenuDatabackup extends StatelessWidget {
         elevation: 0,
         title: const Text(
           "Select Table",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20
+          ),
         ),
         centerTitle: true,
-        leading: const BackButton(color: Colors.white),
+        leading: const BackButton(color: Colors.black),
       ),
       body: Center(
         child: SingleChildScrollView(

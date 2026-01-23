@@ -19,30 +19,32 @@ class LogoBackupHandler {
     return Response(405);
   }
 
-  static String _getLogoPath(Request request) {
+  static String _getDeviceDir(Request request) {
     final deviceName = request.headers['X-Device-Name'];
 
     if (deviceName == null || deviceName.isEmpty) {
       throw Exception('X-Device-Name header missing');
     }
-    return '$_baseDir/$deviceName/logo.jpg';
+
+    return '$_baseDir/$deviceName';
   }
 
   static Future<Response> _uploadLogo(Request request) async {
-    final path = _getLogoPath(request);
-    final file = File(path);
-    await file.create(recursive: true);
+    final deviceDir = Directory(_getDeviceDir(request));
+    await deviceDir.create(recursive: true); // ✅ auto create folder
+
+    final file = File('${deviceDir.path}/logo.jpg');
 
     final sink = file.openWrite();
     await request.read().pipe(sink);
     await sink.close();
 
-    return Response.ok('Logo uploaded');
+    return Response.ok('Logo uploaded successfully');
   }
 
   static Future<Response> _sendLogo(Request request) async {
-    final path = _getLogoPath(request);
-    final file = File(path);
+    final file =
+    File('${_getDeviceDir(request)}/logo.jpg');
 
     if (!await file.exists()) {
       return Response.notFound('Logo not found');

@@ -36,12 +36,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   }
   void _loadFolders() {
     final directory = Directory(backupDir);
-
     if (!directory.existsSync()) {
-      setState(() {
-        loading = false;
-      });
-      return;
+      directory.createSync(recursive: true);
     }
     final folders = directory
         .listSync()
@@ -53,6 +49,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
       loading = false;
     });
   }
+
 
 
   @override
@@ -87,7 +84,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20
+                  fontSize: 16
               ),
             ),
             onTap: () {

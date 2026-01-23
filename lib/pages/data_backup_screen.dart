@@ -84,7 +84,7 @@ class _DataBackupScreenState extends State<DataBackupScreen> {
           style: TextStyle(color: Colors.white70),
         ),
       )
-          : ListView.separated(
+      : ListView.separated(
         itemCount: _dbFiles.length,
         separatorBuilder: (_, _) => const SizedBox(height: 6),
         itemBuilder: (context, index) {
@@ -124,8 +124,9 @@ class _DataBackupScreenState extends State<DataBackupScreen> {
                       child: Text(
                         fileName,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

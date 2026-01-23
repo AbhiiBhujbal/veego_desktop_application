@@ -43,7 +43,7 @@ class _HomeMainScreen extends State<HomeMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF6B7280),
+      backgroundColor: const Color(0xFF2F4263),
 
       body: Stack(
         children: [

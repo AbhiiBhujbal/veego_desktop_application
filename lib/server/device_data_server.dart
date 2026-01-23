@@ -26,33 +26,30 @@ class DeviceDataServer {
   }
 
   static Future<String> _getLocalIp() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
+        final interfaces = await NetworkInterface.list(
+          type: InternetAddressType.IPv4,
+          includeLoopback: false,
+        );
 
-    for (final interface in interfaces) {
-      for (final addr in interface.addresses) {
-        return addr.address;
-      }
-    }
-
-    return "127.0.0.1";
+        for (final interface in interfaces) {
+          for (final addr in interface.addresses) {
+            return addr.address;
+          }
+        }
+        return "127.0.0.1";
   }
-
-
   static Future<Response> _handleDbFileUpload(Request request) async {
     try {
-      _ensureDbFolder();
+          _ensureDbFolder();
 
-      final contentType = request.headers['Content-Type'] ?? '';
-      if (!contentType.startsWith('multipart/form-data')) {
-        return Response(400,
-            body: "Invalid content type, must be multipart/form-data");
-      }
+          final contentType = request.headers['Content-Type'] ?? '';
+          if (!contentType.startsWith('multipart/form-data')) {
+            return Response(400,
+                body: "Invalid content type, must be multipart/form-data");
+          }
 
-      final deviceName = request.headers['X-Device-Name'];
-      print("Device name :$deviceName");
+          final deviceName = request.headers['X-Device-Name'];
+          print("Device name :$deviceName");
       if (deviceName == null || deviceName.isEmpty) {
         throw Exception('X-Device-Name header missing');
       }
@@ -60,6 +57,12 @@ class DeviceDataServer {
       print("File Type :$fileType");
       if (fileType == null || fileType.isEmpty) {
         throw Exception('X-Device-Name header missing');
+      }
+
+      final checksum = request.headers['X-Checksum'];
+      print("checksum :$checksum");
+      if (checksum == null || checksum.isEmpty) {
+         throw Exception('X-Checksum header missing');
       }
 
       final mediaType = MediaType.parse(contentType);
@@ -78,25 +81,19 @@ class DeviceDataServer {
           final match = filenameReg.firstMatch(contentDisposition);
           final filename = match?.group(1) ??
               "device_${DateTime.now().millisecondsSinceEpoch}.db";
-
-
-          late File file ;
-          if(fileType=='Screenshots'){
-            file = File("${_dbFolder.path}/$deviceName/screenshots/$filename");
-          }else if(fileType=='Database'){
-            file = File("${_dbFolder.path}/$deviceName/data/$filename");
-          }
-          final directory = file.parent;
-          if (!directory.existsSync()) {
-            directory.createSync(recursive: true);
-            print("Directory created: ${directory.path}");
-          } else {
-            print("Directory already exists: ${directory.path}");
+          late File file;
+          late String folderPath;
+          if (fileType == 'Screenshots') {
+            folderPath = "${_dbFolder.path}/$deviceName/screenshots";
+          } else if (fileType == 'Database') {
+            folderPath = "${_dbFolder.path}/$deviceName/data";
           }
 
-          // Now you can safely use the file
+          Directory(folderPath).createSync(recursive: true);
+          file = File("$folderPath/$filename");
+          print("File saved successfully: ${file.path}");
           print("Device name Path: $file");
-          
+
           final sink = file.openWrite();
           await part.pipe(sink);
           await sink.flush();
@@ -127,32 +124,30 @@ class DeviceDataServer {
     final handler = Pipeline()
         .addMiddleware(logRequests())
         .addHandler((Request request) async {
-      final logoResponse = await LogoBackupHandler.handle(request);
-      if (logoResponse != null) return logoResponse;
+    final logoResponse = await LogoBackupHandler.handle(request);
+    if (logoResponse != null) return logoResponse;
       debugPrint(
           "[${DateTime.now()}] Incoming: ${request.method} /${request.url.path}"
-      );
-      try {
+    );
+    try {
+      if (request.url.path == 'health') {
+       return await _handleHealth();
+     }
+     if (request.method == 'POST' && request.url.path == 'backup') {
+       return await _handleDbFileUpload(request);
+     }
+     return Response.notFound("Unknown API");
+    } catch (e, st) {
+    debugPrint("$st");
+     return Response.internalServerError();
+    }
+  });
 
+  _server = await io.serve(handler, '0.0.0.0', 0);
+  _ip = await _getLocalIp();
+   _port = _server!.port;
 
-        if (request.url.path == 'health') {
-          return await _handleHealth();
-        }
-        if (request.method == 'POST' && request.url.path == 'backup') {
-          return await _handleDbFileUpload(request);
-        }
-        return Response.notFound("Unknown API");
-      } catch (e, st) {
-        debugPrint("$st");
-        return Response.internalServerError();
-      }
-    });
-
-    _server = await io.serve(handler, '0.0.0.0', 0);
-    _ip = await _getLocalIp();
-    _port = _server!.port;
-
-    Timer.periodic(const Duration(seconds: 10), (_) {
+  Timer.periodic(const Duration(seconds: 10), (_) {
     });
   }
 

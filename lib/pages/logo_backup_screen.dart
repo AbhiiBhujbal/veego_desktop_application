@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class LogoBackupScreen extends StatefulWidget {
   const LogoBackupScreen({super.key});
@@ -9,92 +10,81 @@ class LogoBackupScreen extends StatefulWidget {
 }
 
 class _LogoBackupScreenState extends State<LogoBackupScreen> {
-  static const String baseDir =
-      r'C:\ProgramData\MyFlutterApp\devices';
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
 
-  late Future<List<FileSystemEntity>> _logosFuture;
+  final String deviceName = "Device_001";
+  final String serverUrl = "http://localhost:8080/logo";
 
-  @override
-  void initState() {
-    super.initState();
-    _logosFuture = _loadLogos();
-  }
+  File logoFile = File('assets/images/veego-logo.png');
 
-  Future<List<FileSystemEntity>> _loadLogos() async {
-    final dir = Directory(baseDir);
+  void _onLogoTap() {
+    final now = DateTime.now();
 
-    if (!await dir.exists()) {
-      return [];
+    if (_lastTapTime == null ||
+        now.difference(_lastTapTime!) > const Duration(seconds: 1)) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
     }
 
-    final List<FileSystemEntity> logos = [];
+    _lastTapTime = now;
 
-    await for (final entity in dir.list()) {
-      if (entity is Directory) {
-        final logoFile = File('${entity.path}/logo.jpg');
-        if (await logoFile.exists()) {
-          logos.add(logoFile);
-        }
-      }
+    if (_tapCount == 3) {
+      _tapCount = 0;
+      _uploadLogo();
     }
-    return logos;
   }
+
+  Future<void> _uploadLogo() async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse(serverUrl),
+    );
+
+    request.headers['X-Device-Name'] = deviceName;
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        logoFile.path,
+      ),
+    );
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Logo uploaded')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload failed')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Logos'),
-      ),
-      body: FutureBuilder<List<FileSystemEntity>>(
-        future: _logosFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text('No logos found'),
-            );
-          }
-
-          final logos = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: logos.length,
-            itemBuilder: (context, index) {
-              final file = logos[index] as File;
-              final deviceId =
-                  file.parent.path.split(Platform.pathSeparator).last;
-
-              return ListTile(
-                leading: Image.file(
-                  file,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                ),
-                title: Text(deviceId),
-                subtitle: const Text('logo.jpg'),
-                onTap: () {
-                },
-              );
-            },
-          );
-        },
+      appBar: AppBar(title: const Text('Logo Upload')),
+      body: Center(
+        child: GestureDetector(
+          onTap: _onLogoTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.file(
+                logoFile,
+                width: 120,
+                height: 120,
+              ),
+              const SizedBox(height: 12),
+              const Text('Tap logo 3 times to upload'),
+            ],
+          ),
+        ),
       ),
     );
   }
-
-  // void _openPreview(BuildContext context, File file, String deviceId) {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (_) => LogoPreviewScreen(
-  //         file: file,
-  //         deviceId: deviceId,
-  //       ),
-  //     ),
-  //   );
-  // }
 }

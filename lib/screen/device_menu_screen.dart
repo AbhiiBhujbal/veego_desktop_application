@@ -6,6 +6,7 @@ import 'package:veego_desktop_application/pages/report_backup_screen.dart';
 import 'package:veego_desktop_application/pages/screenshot_backup_screen.dart';
 
 import '../server/logo_backup_handler.dart';
+import 'logo_change_widget.dart';
 
 class DeviceMenuScreen extends StatelessWidget {
   final String deviceBasePath;
@@ -34,8 +35,13 @@ class DeviceMenuScreen extends StatelessWidget {
               fontSize: 20
           ),
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: LogoChangeWidget(),
+          ),
+        ],
       ),
-
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -61,7 +67,7 @@ class DeviceMenuScreen extends StatelessWidget {
                   context,
                   Icons.camera_alt,
                   "Screenshot(s)",
-                   ScreenshotBackupScreen(),
+                  ScreenshotBackupScreen(deviceName: deviceName),
                 ),
               ],
             ),
@@ -132,4 +138,24 @@ class DeviceMenuScreen extends StatelessWidget {
       ),
     );
   }
+  Widget _headerLogo(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        debugPrint("Logo clicked");
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: SizedBox(
+          width: 120,
+          height: 120,
+          child: Image.asset(
+            'assets/images/veego-logo.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+
 }

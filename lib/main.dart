@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -35,6 +36,12 @@ class MyApp extends StatelessWidget {
       title: '',
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+      ),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+        },
       ),
       home: SplashScreen(),
     );
