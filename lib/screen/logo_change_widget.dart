@@ -92,7 +92,7 @@ class _LogoChangeWidgetState extends State<LogoChangeWidget> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _handleLogoTap, // 👈 changed here
+      onTap: _handleLogoTap,
       child: headerLogoFile != null && headerLogoFile!.existsSync()
           ? Image.file(
         headerLogoFile!,

@@ -13,7 +13,6 @@ class DeviceListScreen extends StatefulWidget {
 class _DeviceListScreenState extends State<DeviceListScreen> {
   List<FileSystemEntity> dbFiles = [];
   bool loading = true;
-  final String backupDir = "C:/veego_backups";
   @override
   void initState() {
     super.initState();
@@ -35,10 +34,12 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     }
   }
   void _loadFolders() {
-    final directory = Directory(backupDir);
+    final directory = DeviceDataServer.baseDirectory;
+
     if (!directory.existsSync()) {
       directory.createSync(recursive: true);
     }
+
     final folders = directory
         .listSync()
         .where((entity) => entity is Directory)
@@ -49,6 +50,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
       loading = false;
     });
   }
+
 
 
 
